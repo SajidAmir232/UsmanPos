@@ -1,5 +1,6 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
 @inject ReportsService ReportsService
 @inject ProductService ProductService
 @inject CustomerService CustomerService
@@ -308,7 +309,14 @@
     {
         using var db = new LocalDbContext();
         var customer = db.Customers.FirstOrDefault(c => c.Guid == inv.CustomerGuid && !c.IsDeleted);
-        var items = db.InvoiceItems.Where(i => i.InvoiceGuid == inv.Guid && !i.IsDeleted).ToList();
+        var items = inv.Items?.Where(i => !i.IsDeleted).ToList() ?? new List<InvoiceItem>();
+        if (!items.Any())
+        {
+            items = db.InvoiceItems
+                .Where(i => i.InvoiceGuid == inv.Guid || EF.Property<int>(i, "InvoiceId") == inv.Id)
+                .ToList();
+        }
+
         var settings = db.CompanySettings.FirstOrDefault();
         var html = InvoicePrintHelper.BuildInvoiceHtml(inv, items, customer, settings?.CompanyName ?? "POS System", settings?.Address ?? "", settings?.TaxNumber ?? "");
         await JS.InvokeVoidAsync("openInvoicePrint", html);

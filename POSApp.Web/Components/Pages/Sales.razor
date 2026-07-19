@@ -1,5 +1,6 @@
 @page "/sales"
 @rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
 @inject InvoiceService InvoiceService
 @inject CustomerService CustomerService
 @inject IJSRuntime JS
@@ -121,7 +122,14 @@
         if (selectedInvoice == null) return;
         using var db = new LocalDbContext();
         var customer = db.Customers.FirstOrDefault(c => c.Guid == selectedInvoice.CustomerGuid && !c.IsDeleted);
-        var items = db.InvoiceItems.Where(i => i.InvoiceGuid == selectedInvoice.Guid && !i.IsDeleted).ToList();
+        var items = selectedInvoice.Items?.Where(i => !i.IsDeleted).ToList() ?? new List<InvoiceItem>();
+        if (!items.Any())
+        {
+            items = db.InvoiceItems
+                .Where(i => i.InvoiceGuid == selectedInvoice.Guid || EF.Property<int>(i, "InvoiceId") == selectedInvoice.Id)
+                .ToList();
+        }
+
         var settings = db.CompanySettings.FirstOrDefault();
         var html = InvoicePrintHelper.BuildInvoiceHtml(selectedInvoice, items, customer, settings?.CompanyName ?? "POS System", settings?.Address ?? "", settings?.TaxNumber ?? "");
         await JS.InvokeVoidAsync("openInvoicePrint", html);

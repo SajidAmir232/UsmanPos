@@ -14,9 +14,8 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "(.*)",
       "dest": "/"
     }
-  ],
-  "framework": "dotnet"
+  ]
 }

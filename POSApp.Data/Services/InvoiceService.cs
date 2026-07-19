@@ -22,16 +22,30 @@ namespace POSApp.Data.Services
             using var db = new LocalDbContext();
             using var tx = db.Database.BeginTransaction();
 
+            if (invoice.Guid == Guid.Empty)
+            {
+                invoice.Guid = Guid.NewGuid();
+            }
+
             invoice.InvoiceNumber = GenerateInvoiceNumber(db);
             invoice.CreatedByDeviceId = deviceId;
             invoice.UpdatedAtUtc = DateTime.UtcNow;
+            invoice.IsDeleted = false;
             invoice.IsSynced = false;
 
             db.Invoices.Add(invoice);
 
             foreach (var item in invoice.Items)
             {
+                if (item.Guid == Guid.Empty)
+                {
+                    item.Guid = Guid.NewGuid();
+                }
+
                 item.InvoiceGuid = invoice.Guid;
+                item.UpdatedAtUtc = DateTime.UtcNow;
+                item.IsDeleted = false;
+                item.IsSynced = false;
                 db.InvoiceItems.Add(item);
 
                 var product = db.Products.FirstOrDefault(p => p.Guid == item.ProductGuid);

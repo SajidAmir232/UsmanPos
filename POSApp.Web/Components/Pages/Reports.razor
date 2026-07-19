@@ -286,4 +286,36 @@ else if (activeTab == "returns")
         receivablesData = ReportsService.GetReceivablesPayablesSummaryReport();
         returnsData = ReportsService.GetSalesReturnReport(fromDate, toDate);
     }
+
+    private int GetChartHeight(decimal value)
+    {
+        var maxValue = 1m;
+        if (dailyData.Any())
+        {
+            maxValue = Math.Max(maxValue, dailyData.Max(d => Math.Max(d.SalesAmount, d.PurchaseAmount)));
+        }
+
+        if (cashierData.Any())
+        {
+            maxValue = Math.Max(maxValue, cashierData.Max(c => ParseAmount(c.TotalSales)));
+        }
+
+        if (productData.Any())
+        {
+            maxValue = Math.Max(maxValue, productData.Max(p => ParseAmount(p.TotalSales)));
+        }
+
+        if (maxValue <= 0) return 8;
+        var height = Math.Min(100m, 100m * value / maxValue);
+        return (int)Math.Max(8, height);
+    }
+
+    private decimal ParseAmount(string amount)
+    {
+        if (string.IsNullOrWhiteSpace(amount)) return 0;
+        var cleaned = amount.Replace("Rs", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace(",", string.Empty)
+            .Trim();
+        return decimal.TryParse(cleaned, out var value) ? value : 0;
+    }
 }
