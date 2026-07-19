@@ -15,10 +15,22 @@ else if (!WebAuth.IsLoggedIn && IsPublicPage)
 else
 {
     <div class="page">
-        <div class="sidebar">
+        <div class="sidebar @(isSidebarCollapsed ? "collapsed" : "")">
             <div class="brand">
-                POS System
-                <small>Web Dashboard</small>
+                <div>
+                    POS System
+                    <small>Web Dashboard</small>
+                </div>
+                <button class="btn btn-ghost btn-sm collapse-btn" @onclick="ToggleSidebar">
+                    @if (isSidebarCollapsed)
+                    {
+                        <span>&#9654;</span>
+                    }
+                    else
+                    {
+                        <span>&#9664;</span>
+                    }
+                </button>
             </div>
             <nav>
                 <NavLink href="" Match="NavLinkMatch.All" class="nav-link">
@@ -120,6 +132,13 @@ else
     {
         WebAuth.OnAuthStateChanged -= StateHasChanged;
         OfflineSync.OnSyncStateChanged -= StateHasChanged;
+    }
+
+    private bool isSidebarCollapsed;
+
+    private void ToggleSidebar()
+    {
+        isSidebarCollapsed = !isSidebarCollapsed;
     }
 
     private void Logout()

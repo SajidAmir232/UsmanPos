@@ -1,5 +1,6 @@
 @page "/customers"
 @rendermode InteractiveServer
+@inject IJSRuntime JS
 @inject CustomerService CustomerService
 
 <div class="d-flex align-center justify-between mb-4">
@@ -69,6 +70,10 @@
                 </div>
             </div>
             <div class="d-flex gap-2" style="justify-content:flex-end;">
+                @if (editingCustomer != null)
+                {
+                    <button class="btn btn-danger btn-sm" @onclick="DeleteCustomer">Delete</button>
+                }
                 <button class="btn btn-ghost btn-sm" @onclick="CloseForm">Cancel</button>
                 <button class="btn btn-primary btn-sm" @onclick="SaveCustomer">Save</button>
             </div>
@@ -136,6 +141,18 @@
             };
         }
         CustomerService.Save(editingCustomer);
+        showForm = false;
+        LoadCustomers();
+    }
+
+    private async Task DeleteCustomer()
+    {
+        if (editingCustomer == null) return;
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this customer?");
+        if (!confirmed) return;
+
+        CustomerService.Delete(editingCustomer.Id);
+        editingCustomer = null;
         showForm = false;
         LoadCustomers();
     }

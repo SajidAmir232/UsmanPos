@@ -1,5 +1,6 @@
 @page "/suppliers"
 @rendermode InteractiveServer
+@inject IJSRuntime JS
 @inject SupplierService SupplierService
 
 <div class="d-flex align-center justify-between mb-4">
@@ -47,6 +48,10 @@
             <div class="form-group"><label>Address</label><input class="form-control" @bind="formAddress" /></div>
             <div class="form-group"><label>Payable Balance</label><input type="number" step="0.01" class="form-control" @bind="formPayableBalance" /></div>
             <div class="d-flex gap-2" style="justify-content:flex-end;">
+                @if (editingSupplier != null)
+                {
+                    <button class="btn btn-danger btn-sm" @onclick="DeleteSupplier">Delete</button>
+                }
                 <button class="btn btn-ghost btn-sm" @onclick="CloseForm">Cancel</button>
                 <button class="btn btn-primary btn-sm" @onclick="SaveSupplier">Save</button>
             </div>
@@ -110,6 +115,18 @@
             };
         }
         SupplierService.Save(editingSupplier);
+        showForm = false;
+        LoadSuppliers();
+    }
+
+    private async Task DeleteSupplier()
+    {
+        if (editingSupplier == null) return;
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this supplier?");
+        if (!confirmed) return;
+
+        SupplierService.Delete(editingSupplier.Id);
+        editingSupplier = null;
         showForm = false;
         LoadSuppliers();
     }
