@@ -33,7 +33,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 
     var existingDefaultAdmin = db.Users.FirstOrDefault(u =>
         u.Guid == Guid.Parse("00000000-0000-0000-0000-000000000001") ||

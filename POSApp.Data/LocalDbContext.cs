@@ -10,11 +10,32 @@ namespace POSApp.Data
 
         public LocalDbContext()
         {
+            _dbPath = GetDatabasePath();
+            var folder = Path.GetDirectoryName(_dbPath);
+            if (!string.IsNullOrWhiteSpace(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+        }
+
+        private string GetDatabasePath()
+        {
+            var configuredPath = Environment.GetEnvironmentVariable("POSAPP_DB_PATH");
+            if (!string.IsNullOrWhiteSpace(configuredPath))
+            {
+                return Path.GetFullPath(configuredPath);
+            }
+
+            var configuredDir = Environment.GetEnvironmentVariable("POSAPP_DATA_DIR");
+            if (!string.IsNullOrWhiteSpace(configuredDir))
+            {
+                return Path.GetFullPath(Path.Combine(configuredDir, "pos_local.db"));
+            }
+
             var folder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "POSApp");
-            Directory.CreateDirectory(folder);
-            _dbPath = Path.Combine(folder, "pos_local.db");
+            return Path.Combine(folder, "pos_local.db");
         }
 
         public DbSet<Product> Products => Set<Product>();

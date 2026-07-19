@@ -11,8 +11,10 @@ RUN dotnet publish POSApp.Web/POSApp.Web.csproj -c Release -o /app/publish --no-
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
+RUN mkdir -p /app/data
 COPY --from=build /app/publish .
 
+ENV POSAPP_DB_PATH=/app/data/pos_local.db
 ENV ASPNETCORE_URLS="http://+:${PORT:-8080}"
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_EnableDiagnostics=0
