@@ -1,0 +1,275 @@
+@page "/pos"
+@rendermode InteractiveServer
+@inject ProductService ProductService
+@inject CustomerService CustomerService
+@inject InvoiceService InvoiceService
+@inject WebAuthService WebAuth
+@inject IJSRuntime JS
+@inject OfflineSyncService OfflineSync
+
+<div class="d-flex align-center justify-between mb-4">
+    <h2 style="font-size:16px;font-weight:600;">New Sale</h2>
+    <div class="d-flex gap-2 align-center">
+        <span class="text-muted text-sm">Cashier: @(WebAuth.CurrentUser?.Username ?? "Admin")</span>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 380px;gap:16px;">
+    <div>
+        <div class="card mb-3">
+            <div class="d-flex gap-2 mb-3">
+                <input type="text" class="form-control form-control-sm" placeholder="Search products by name or SKU..." @bind="searchQuery" @bind:event="oninput" style="flex:1;" />
+            </div>
+            <div class="table-wrap" style="max-height:300px;overflow-y:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Stock</th>
+                            <th>Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in filteredProducts)
+                        {
+                            <tr>
+                                <td class="fw-600">@p.Name<br/><span class="text-muted text-sm">@p.Sku</span></td>
+                                <td><span class="badge @(p.Quantity == 0 ? "badge-red" : "badge-green")">@p.Quantity</span></td>
+                                <td class="fw-600">Rs@(p.SalePrice.ToString("N0"))</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm" @onclick="() => AddToCart(p)" disabled="@(p.Quantity == 0)">Add</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card" style="position:sticky;top:0;">
+            <div class="card-header">Cart</div>
+
+            <div class="form-group mb-3">
+                <label>Customer</label>
+                <select class="form-control form-control-sm" @bind="selectedCustomerGuid">
+                    <option value="">-- Walk-in Customer --</option>
+                    @foreach (var c in customers)
+                    {
+                        <option value="@c.Guid">@c.Name (@(c.Phone ?? ""))</option>
+                    }
+                </select>
+            </div>
+
+            @if (cartItems.Any())
+            {
+                <div class="table-wrap mb-3" style="max-height:200px;overflow-y:auto;">
+                    <table>
+                        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var item in cartItems)
+                            {
+                                <tr>
+                                    <td style="font-size:12px;">@item.ProductName</td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" style="width:50px;" min="1" @bind="item.Quantity" @bind:event="oninput" />
+                                    </td>
+                                    <td class="fw-600" style="font-size:12px;">Rs@((item.UnitPrice * item.Quantity).ToString("N0"))</td>
+                                    <td><button class="btn btn-ghost btn-sm" @onclick="() => RemoveFromCart(item)">&#10005;</button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Cart is empty. Add products from the list.</div>
+            }
+
+            <div style="display:grid;gap:8px;font-size:13px;border-top:1px solid #e2e8f0;padding-top:12px;">
+                <div class="d-flex justify-between"><span class="text-muted">Subtotal</span><span class="fw-600">Rs@(subTotal.ToString("N0"))</span></div>
+                <div class="d-flex justify-between align-center">
+                    <span class="text-muted">Discount</span>
+                    <input type="number" class="form-control form-control-sm" style="width:100px;text-align:right;" @bind="discount" @bind:event="oninput" min="0" />
+                </div>
+                <div class="d-flex justify-between fw-700" style="font-size:15px;border-top:1px solid #e2e8f0;padding-top:8px;">
+                    <span>Total</span>
+                    <span style="color:#4f46e5;">Rs@(grandTotal.ToString("N0"))</span>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <select class="form-control form-control-sm" @bind="saleType" style="width:120px;">
+                    <option value="Cash">Cash</option>
+                    <option value="Credit">Credit</option>
+                </select>
+                @if (saleType == "Cash")
+                {
+                    <div class="d-flex gap-2" style="flex:1;">
+                        <input type="number" class="form-control form-control-sm" placeholder="Paid amount" @bind="paidAmount" style="flex:1;" />
+                    </div>
+                }
+            </div>
+
+            <button class="btn btn-success mt-3" style="width:100%;justify-content:center;" @onclick="CompleteSale" disabled="@(!cartItems.Any())">
+                Complete Sale - Rs@(grandTotal.ToString("N0"))
+            </button>
+
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <div style="margin-top:8px;padding:8px;border-radius:6px;font-size:12px;background:@(isSuccess ? "#d1fae5" : "#fee2e2");color:@(isSuccess ? "#065f46" : "#991b1b");">
+                    @message
+                </div>
+                @if (isSuccess && lastInvoice != null)
+                {
+                    <button class="btn btn-outline mt-2" style="width:100%;justify-content:center;" @onclick="() => PrintLastInvoice()">Print Invoice</button>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string searchQuery = "";
+    private List<Product> allProducts = new();
+    private List<Customer> customers = new();
+    private string selectedCustomerGuid = "";
+    private string saleType = "Cash";
+    private decimal paidAmount;
+    private decimal discount;
+    private string message = "";
+    private bool isSuccess;
+    private Invoice? lastInvoice;
+
+    private List<CartItem> cartItems = new();
+
+    private List<Product> filteredProducts => string.IsNullOrWhiteSpace(searchQuery)
+        ? allProducts.Where(p => p.Quantity > 0).ToList()
+        : allProducts.Where(p => (p.Quantity > 0) && (p.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) || (p.Sku ?? "").Contains(searchQuery, StringComparison.OrdinalIgnoreCase))).ToList();
+
+    private decimal subTotal => cartItems.Sum(i => i.UnitPrice * i.Quantity);
+    private decimal grandTotal => Math.Max(0, subTotal - discount);
+
+    protected override void OnInitialized()
+    {
+        allProducts = ProductService.GetAll();
+        customers = CustomerService.GetAll();
+    }
+
+    private void AddToCart(Product p)
+    {
+        var existing = cartItems.FirstOrDefault(c => c.ProductGuid == p.Guid);
+        if (existing != null)
+        {
+            if (existing.Quantity < p.Quantity)
+                existing.Quantity++;
+        }
+        else
+        {
+            cartItems.Add(new CartItem
+            {
+                ProductGuid = p.Guid,
+                ProductName = p.Name,
+                UnitPrice = p.SalePrice,
+                Quantity = 1,
+                MaxStock = p.Quantity
+            });
+        }
+        message = "";
+    }
+
+    private void RemoveFromCart(CartItem item) => cartItems.Remove(item);
+
+    private async Task CompleteSale()
+    {
+        message = "";
+        if (!cartItems.Any())
+        {
+            message = "Cart is empty.";
+            isSuccess = false;
+            return;
+        }
+
+        var customerGuid = string.IsNullOrEmpty(selectedCustomerGuid) ? Guid.Empty : Guid.Parse(selectedCustomerGuid);
+
+        if (saleType == "Credit" && customerGuid == Guid.Empty)
+        {
+            message = "Please select a customer for credit sale.";
+            isSuccess = false;
+            return;
+        }
+
+        var invoice = new Invoice
+        {
+            CustomerGuid = customerGuid,
+            InvoiceDate = DateTime.Now,
+            SubTotal = subTotal,
+            Discount = discount,
+            Tax = 0,
+            GrandTotal = grandTotal,
+            PaidAmount = saleType == "Cash" ? paidAmount : 0,
+            Status = saleType == "Cash" ? (paidAmount >= grandTotal ? "Paid" : "Partial") : "Unpaid",
+            SaleType = saleType,
+            Items = cartItems.Select(ci => new InvoiceItem
+            {
+                ProductGuid = ci.ProductGuid,
+                ProductName = ci.ProductName,
+                Quantity = ci.Quantity,
+                UnitPrice = ci.UnitPrice,
+                Total = ci.UnitPrice * ci.Quantity
+            }).ToList()
+        };
+
+        InvoiceService.Create(invoice, "web");
+        lastInvoice = invoice;
+
+        if (!OfflineSync.IsOnline)
+        {
+            await OfflineSync.SaveInvoiceOffline(invoice);
+            message = $"Sale saved offline! Invoice #{invoice.InvoiceNumber} (will sync when online)";
+        }
+        else
+        {
+            message = $"Sale completed! Invoice #{invoice.InvoiceNumber}";
+        }
+
+        if (saleType == "Credit" && customerGuid != Guid.Empty)
+        {
+            var customer = CustomerService.GetAll().FirstOrDefault(c => c.Guid == customerGuid);
+            if (customer != null)
+            {
+                customer.CurrentBalance += grandTotal;
+                CustomerService.Save(customer);
+            }
+        }
+
+        isSuccess = true;
+        cartItems.Clear();
+        discount = 0;
+        paidAmount = 0;
+        allProducts = ProductService.GetAll();
+    }
+
+    private class CartItem
+    {
+        public Guid ProductGuid { get; set; }
+        public string ProductName { get; set; } = "";
+        public decimal UnitPrice { get; set; }
+        public decimal Quantity { get; set; }
+        public int MaxStock { get; set; }
+    }
+
+    private async Task PrintLastInvoice()
+    {
+        if (lastInvoice == null) return;
+        using var db = new LocalDbContext();
+        var customer = db.Customers.FirstOrDefault(c => c.Guid == lastInvoice.CustomerGuid && !c.IsDeleted);
+        var items = db.InvoiceItems.Where(i => i.InvoiceGuid == lastInvoice.Guid && !i.IsDeleted).ToList();
+        var settings = db.CompanySettings.FirstOrDefault();
+        var html = InvoicePrintHelper.BuildInvoiceHtml(lastInvoice, items, customer, settings?.CompanyName ?? "POS System", settings?.Address ?? "", settings?.TaxNumber ?? "");
+        await JS.InvokeVoidAsync("openInvoicePrint", html);
+    }
+}

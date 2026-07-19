@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="app.css?v=2.0" />
+    <link rel="stylesheet" href="POSApp.Web.styles.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <HeadOutlet />
+</head>
+<body>
+    <Routes />
+    <script src="_framework/blazor.web.js"></script>
+    <script>
+        window.openInvoicePrint = function(html) {
+            var w = window.open('', '_blank', 'width=800,height=600');
+            w.document.write(html);
+            w.document.close();
+        };
+
+        window.offlineSync = {
+            isOnline: function() { return navigator.onLine; },
+            saveInvoice: function(json) {
+                var pending = JSON.parse(localStorage.getItem('pos_pending_invoices') || '[]');
+                var invoice = JSON.parse(json);
+                pending.push(invoice);
+                localStorage.setItem('pos_pending_invoices', JSON.stringify(pending));
+            },
+            getPendingInvoices: function() {
+                return localStorage.getItem('pos_pending_invoices') || '[]';
+            },
+            getPendingCount: function() {
+                var pending = JSON.parse(localStorage.getItem('pos_pending_invoices') || '[]');
+                return pending.length;
+            },
+            removePendingInvoice: function(guid) {
+                var pending = JSON.parse(localStorage.getItem('pos_pending_invoices') || '[]');
+                pending = pending.filter(function(i) { return i.Guid !== guid; });
+                localStorage.setItem('pos_pending_invoices', JSON.stringify(pending));
+            },
+            clearAll: function() {
+                localStorage.removeItem('pos_pending_invoices');
+            }
+        };
+
+        window.addEventListener('online', function() {
+            Blazor.invokeMethodAsync('SyncOnlineStatus', true).catch(function(){});
+        });
+        window.addEventListener('offline', function() {
+            Blazor.invokeMethodAsync('SyncOnlineStatus', false).catch(function(){});
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+@page "/products"
+@rendermode InteractiveServer
+@inject ProductService ProductService
+
+<div class="d-flex align-center justify-between mb-4">
+    <div>
+        <input type="text" class="form-control form-control-sm" placeholder="Search products..." @bind="searchQuery" @bind:event="oninput" style="width: 280px;" />
+    </div>
+    <button class="btn btn-primary btn-sm" @onclick="ShowAddForm">+ Add Product</button>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>SKU</th>
+                    <th>Category</th>
+                    <th>Purchase Price</th>
+                    <th>Sale Price</th>
+                    <th>Stock</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in filteredProducts)
+                {
+                    <tr>
+                        <td class="fw-600">@p.Name</td>
+                        <td>@p.Sku</td>
+                        <td>@(p.Category ?? "-")</td>
+                        <td>Rs@(p.PurchasePrice.ToString("N0"))</td>
+                        <td>Rs@(p.SalePrice.ToString("N0"))</td>
+                        <td>
+                            <span class="badge @(p.Quantity == 0 ? "badge-red" : p.Quantity <= 10 ? "badge-amber" : "badge-green")">
+                                @p.Quantity
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-ghost btn-sm" @onclick="() => EditProduct(p)">Edit</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (showForm)
+{
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:center;justify-content:center;" @onclick="CloseForm">
+        <div class="card" style="width:420px;max-height:80vh;overflow-y:auto;" @onclick:stopPropagation="true">
+            <div class="card-header">@(editingProduct == null ? "Add Product" : "Edit Product")</div>
+            <div class="form-group">
+                <label>Name</label>
+                <input class="form-control" @bind="formName" />
+            </div>
+            <div class="form-group">
+                <label>SKU</label>
+                <input class="form-control" @bind="formSku" />
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <input class="form-control" @bind="formCategory" />
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label>Purchase Price</label>
+                    <input class="form-control" type="number" @bind="formPurchasePrice" />
+                </div>
+                <div class="form-group">
+                    <label>Sale Price</label>
+                    <input class="form-control" type="number" @bind="formSalePrice" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input class="form-control" type="number" @bind="formQuantity" />
+            </div>
+            <div class="d-flex gap-2" style="justify-content:flex-end;">
+                <button class="btn btn-ghost btn-sm" @onclick="CloseForm">Cancel</button>
+                <button class="btn btn-primary btn-sm" @onclick="SaveProduct">Save</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Product> allProducts = new();
+    private string searchQuery = "";
+    private bool showForm;
+    private Product? editingProduct;
+    private string formName = "", formSku = "", formCategory = "";
+    private decimal formPurchasePrice, formSalePrice;
+    private int formQuantity;
+
+    private List<Product> filteredProducts => string.IsNullOrWhiteSpace(searchQuery)
+        ? allProducts
+        : allProducts.Where(p => p.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                 (p.Sku ?? "").Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override void OnInitialized() => LoadProducts();
+
+    private void LoadProducts()
+    {
+        allProducts = ProductService.GetAll();
+    }
+
+    private void ShowAddForm()
+    {
+        editingProduct = null;
+        formName = formSku = formCategory = "";
+        formPurchasePrice = formSalePrice = 0;
+        formQuantity = 0;
+        showForm = true;
+    }
+
+    private void EditProduct(Product p)
+    {
+        editingProduct = p;
+        formName = p.Name;
+        formSku = p.Sku ?? "";
+        formCategory = p.Category ?? "";
+        formPurchasePrice = p.PurchasePrice;
+        formSalePrice = p.SalePrice;
+        formQuantity = p.Quantity;
+        showForm = true;
+    }
+
+    private void CloseForm() => showForm = false;
+
+    private void SaveProduct()
+    {
+        if (editingProduct != null)
+        {
+            editingProduct.Name = formName;
+            editingProduct.Sku = formSku;
+            editingProduct.Category = formCategory;
+            editingProduct.PurchasePrice = formPurchasePrice;
+            editingProduct.SalePrice = formSalePrice;
+            editingProduct.Quantity = formQuantity;
+            ProductService.Save(editingProduct);
+        }
+        else
+        {
+            var product = new Product
+            {
+                Name = formName,
+                Sku = formSku,
+                Category = formCategory,
+                PurchasePrice = formPurchasePrice,
+                SalePrice = formSalePrice,
+                Quantity = formQuantity
+            };
+            ProductService.Save(product);
+        }
+        showForm = false;
+        LoadProducts();
+    }
+}
