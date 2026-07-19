@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY POSApp.Data/POSApp.Data.csproj POSApp.Data/
@@ -9,7 +9,7 @@ COPY POSApp.Data/ POSApp.Data/
 COPY POSApp.Web/ POSApp.Web/
 RUN dotnet publish POSApp.Web/POSApp.Web.csproj -c Release -o /app/publish --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 RUN mkdir -p /app/data
 COPY --from=build /app/publish .
