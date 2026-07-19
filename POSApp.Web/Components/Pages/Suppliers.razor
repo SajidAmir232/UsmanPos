@@ -45,6 +45,7 @@
             <div class="form-group"><label>Name</label><input class="form-control" @bind="formName" /></div>
             <div class="form-group"><label>Phone</label><input class="form-control" @bind="formPhone" /></div>
             <div class="form-group"><label>Address</label><input class="form-control" @bind="formAddress" /></div>
+            <div class="form-group"><label>Payable Balance</label><input type="number" step="0.01" class="form-control" @bind="formPayableBalance" /></div>
             <div class="d-flex gap-2" style="justify-content:flex-end;">
                 <button class="btn btn-ghost btn-sm" @onclick="CloseForm">Cancel</button>
                 <button class="btn btn-primary btn-sm" @onclick="SaveSupplier">Save</button>
@@ -59,6 +60,7 @@
     private bool showForm;
     private Supplier? editingSupplier;
     private string formName = "", formPhone = "", formAddress = "";
+    private string formPayableBalance = "0";
 
     private List<Supplier> filteredSuppliers => string.IsNullOrWhiteSpace(searchQuery)
         ? allSuppliers
@@ -72,6 +74,7 @@
     {
         editingSupplier = null;
         formName = formPhone = formAddress = "";
+        formPayableBalance = "0";
         showForm = true;
     }
 
@@ -81,6 +84,7 @@
         formName = s.Name;
         formPhone = s.Phone ?? "";
         formAddress = s.Address ?? "";
+        formPayableBalance = s.PayableBalance.ToString("0.##");
         showForm = true;
     }
 
@@ -93,10 +97,17 @@
             editingSupplier.Name = formName;
             editingSupplier.Phone = formPhone;
             editingSupplier.Address = formAddress;
+            editingSupplier.PayableBalance = decimal.TryParse(formPayableBalance, out var value) ? value : 0;
         }
         else
         {
-            editingSupplier = new Supplier { Name = formName, Phone = formPhone, Address = formAddress };
+            editingSupplier = new Supplier
+            {
+                Name = formName,
+                Phone = formPhone,
+                Address = formAddress,
+                PayableBalance = decimal.TryParse(formPayableBalance, out var value) ? value : 0
+            };
         }
         SupplierService.Save(editingSupplier);
         showForm = false;
