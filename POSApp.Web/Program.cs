@@ -1,3 +1,4 @@
+using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using POSApp.Data;
 using POSApp.Data.Services;
@@ -33,6 +34,22 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
     db.Database.EnsureCreated();
+
+    var existingDefaultAdmin = db.Users.FirstOrDefault(u =>
+        u.Guid == Guid.Parse("00000000-0000-0000-0000-000000000001") ||
+        (u.Username == "admin" && u.Email == "admin@posapp.local"));
+
+    if (existingDefaultAdmin != null)
+    {
+        existingDefaultAdmin.Username = "admin3";
+        existingDefaultAdmin.Email = "admin3@posapp.local";
+        existingDefaultAdmin.PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin34");
+        existingDefaultAdmin.UpdatedAtUtc = DateTime.UtcNow;
+        existingDefaultAdmin.IsSynced = false;
+        db.Users.Update(existingDefaultAdmin);
+        db.SaveChanges();
+    }
+
     MockDataService.SeedAll(db);
 }
 

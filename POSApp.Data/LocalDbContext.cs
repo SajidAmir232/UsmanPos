@@ -113,9 +113,9 @@ namespace POSApp.Data
             {
                 Id = 1,
                 Guid = Guid.Parse("00000000-0000-0000-0000-000000000001"),
-                Username = "admin",
-                Email = "admin@posapp.local",
-                PasswordHash = "$2a$11$BoDXkSEX7DtRJ7klkgHhQ.RpZLtIXZ5dw.Vz/MMreEnMIoYCLa2fu",
+                Username = "admin3",
+                Email = "admin3@posapp.local",
+                PasswordHash = "$2a$11$l7mqkBUB9WlwrqcnOp0EMenAApBvbdo0ozXHwbxy.CLCF.iVGb5YW",
                 Role = "Admin",
                 IsActive = true,
                 IsDeleted = false,
