@@ -874,12 +874,21 @@ namespace POSApp.Data.Migrations
                     b.Property<DateTime?>("LastLoginAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Notes")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Role")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("SubscriptionEndDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("SubscriptionStartDate")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UpdatedAtUtc")
