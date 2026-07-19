@@ -50,23 +50,31 @@
         <div class="stat-card blue"><div class="label">Invoices</div><div class="value">@(salesData.FirstOrDefault(s => s.Metric == "Total Invoices")?.Value ?? "0")</div></div>
         <div class="stat-card amber"><div class="label">Avg Sale</div><div class="value">Rs@(salesData.FirstOrDefault(s => s.Metric == "Average Sale Amount")?.Value?.Replace("Rs","") ?? "0")</div></div>
     </div>
-    <div class="chart-panel">
+    <div class="card">
         <div class="card-header">Daily Sales / Purchase Trend</div>
-        <div class="chart-legend">
-            <span><span class="legend-dot legend-dot-sales"></span>Sales</span>
-            <span><span class="legend-dot legend-dot-purchases"></span>Purchases</span>
-        </div>
-        <div class="chart-bar-wrap">
-            @foreach (var d in dailyData.Where(d => d.SalesAmount > 0 || d.PurchaseAmount > 0))
-            {
-                <div class="chart-bar">
-                    <div class="bar-wrap">
-                        <div class="bar green" style="height:@(GetChartHeight(d.SalesAmount))px" title="Sales: Rs@(d.SalesAmount.ToString("N0"))"></div>
-                        <div class="bar amber" style="height:@(GetChartHeight(d.PurchaseAmount))px" title="Purchases: Rs@(d.PurchaseAmount.ToString("N0"))"></div>
+        <div class="chart-area">
+            <div class="chart-yaxis">
+                @for (int i = 4; i >= 0; i--)
+                {
+                    <div class="chart-ylabel">@FormatAxisLabel(i)</div>
+                }
+            </div>
+            <div class="chart-bars">
+                @foreach (var d in dailyData)
+                {
+                    <div class="chart-col">
+                        <div class="chart-bar-row">
+                            <div class="chart-bar" style="height:@GetChartHeightPercent(d.SalesAmount)%;background:#10b981;" title="Sales: Rs@(d.SalesAmount.ToString("N0"))"></div>
+                            <div class="chart-bar" style="height:@GetChartHeightPercent(d.PurchaseAmount)%;background:#f59e0b;" title="Purchases: Rs@(d.PurchaseAmount.ToString("N0"))"></div>
+                        </div>
+                        <div class="chart-day-label">@d.Date.ToString("dd MMM")</div>
                     </div>
-                    <div class="chart-bar-label">@d.Date.ToString("dd MMM")</div>
-                </div>
-            }
+                }
+            </div>
+        </div>
+        <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Sales</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Purchases</span>
         </div>
     </div>
     <div class="card">
@@ -319,6 +327,19 @@ else if (activeTab == "returns")
         if (maxValue <= 0) return 8;
         var height = Math.Min(100m, 100m * value / maxValue);
         return (int)Math.Max(8, height);
+    }
+
+    private int GetChartHeightPercent(decimal value)
+    {
+        var maxValue = Math.Max(1m, dailyData.Max(d => Math.Max(d.SalesAmount, d.PurchaseAmount)));
+        return (int)Math.Max(4, Math.Min(100, 100 * value / maxValue));
+    }
+
+    private string FormatAxisLabel(int step)
+    {
+        var maxValue = Math.Max(1m, dailyData.Max(d => Math.Max(d.SalesAmount, d.PurchaseAmount)));
+        var labelValue = Math.Round(maxValue * step / 4);
+        return labelValue >= 1000000 ? $"{labelValue/1000000:0.#}M" : labelValue >= 1000 ? $"{labelValue/1000:0.#}K" : labelValue.ToString("N0");
     }
 
     private decimal ParseAmount(string amount)

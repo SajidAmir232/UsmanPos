@@ -193,7 +193,7 @@
                 <div class="tp-r">
                     <div class="rank-b" style="background:rgba(@GetRgb(color),0.12);color:@color;">@(i + 1)</div>
                     <div class="tp-i"><div class="tp-n">@item.Name</div><div class="tp-m">@item.Qty sold</div></div>
-                    <div class="tp-rev">Rs@item.Revenue.ToString("N0")</div>
+                    <div class="tp-rev">Rs@(item.Revenue.ToString("N0"))</div>
                 </div>
             }
         }
