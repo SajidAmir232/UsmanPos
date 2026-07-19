@@ -871,6 +871,9 @@ namespace POSApp.Data.Migrations
                     b.Property<DateTime?>("LastFailedAttempt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("TEXT");
