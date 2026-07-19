@@ -29,8 +29,8 @@
 <style>
     .chart-panel {margin-bottom:16px;}
     .chart-bar-wrap {display:flex;align-items:flex-end;gap:10px;overflow-x:auto;padding:12px 0;}
-    .chart-bar {display:flex;flex-direction:column;align-items:center;min-width:80px;}
-    .chart-bar .bar {width:100%;border-radius:6px 6px 0 0;background:#4f46e5;}
+    .chart-bar {display:flex;flex-direction:column;align-items:center;min-width:80px;height:140px;justify-content:flex-end;}
+    .chart-bar .bar {width:100%;border-radius:6px 6px 0 0;background:#4f46e5;min-height:4px;}
     .chart-bar .bar-label {margin-top:6px;font-size:11px;color:#475569;text-align:center;word-break:break-word;}
     .chart-bar.small .bar {background:#60a5fa;}
     .chart-bar.green .bar {background:#10b981;}
@@ -197,7 +197,7 @@ else if (activeTab == "purchase")
                     <tr>
                         <td class="fw-600">@p.SupplierName</td>
                         <td>@p.InvoiceCount</td>
-                        <td class="fw-600">Rs@p.TotalPurchase.Replace("Rs","")</td>
+                        <td class="fw-600">Rs@ParseAmount(p.TotalPurchase).ToString("N0")</td>
                     </tr>
                 }
             </tbody>
