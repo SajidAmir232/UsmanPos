@@ -7,12 +7,15 @@ RUN dotnet restore POSApp.Web/POSApp.Web.csproj
 
 COPY POSApp.Data/ POSApp.Data/
 COPY POSApp.Web/ POSApp.Web/
-RUN dotnet publish POSApp.Web/POSApp.Web.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish POSApp.Web/POSApp.Web.csproj -c Release -o /app/publish --no-restore --no-self-contained
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 RUN mkdir -p /app/data
 COPY --from=build /app/publish .
+
+# Ensure wwwroot directory exists with proper permissions
+RUN chmod -R 755 /app/wwwroot 2>/dev/null || true
 
 ENV POSAPP_DB_PATH=/app/data/pos_local.db
 ENV ASPNETCORE_URLS="http://+:${PORT:-8080}"
