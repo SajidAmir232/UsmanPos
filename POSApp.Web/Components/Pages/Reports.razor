@@ -26,12 +26,37 @@
     <div class="tab @(activeTab == "returns" ? "active" : "")" @onclick='() => SetTab("returns")'>Sales Returns</div>
 </div>
 
+<style>
+    .chart-panel {margin-bottom:16px;}
+    .chart-bar-wrap {display:flex;align-items:flex-end;gap:10px;overflow-x:auto;padding:12px 0;}
+    .chart-bar {display:flex;flex-direction:column;align-items:center;min-width:80px;}
+    .chart-bar .bar {width:100%;border-radius:6px 6px 0 0;background:#4f46e5;}
+    .chart-bar .bar-label {margin-top:6px;font-size:11px;color:#475569;text-align:center;word-break:break-word;}
+    .chart-bar.small .bar {background:#60a5fa;}
+    .chart-bar.green .bar {background:#10b981;}
+    .chart-bar.amber .bar {background:#f59e0b;}
+    .chart-bar.red .bar {background:#ef4444;}
+</style>
+
 @if (activeTab == "sales")
 {
     <div class="stat-grid">
         <div class="stat-card green"><div class="label">Total Sales</div><div class="value">Rs@(salesData.FirstOrDefault(s => s.Metric == "Total Sales Amount")?.Value?.Replace("Rs","") ?? "0")</div></div>
         <div class="stat-card blue"><div class="label">Invoices</div><div class="value">@(salesData.FirstOrDefault(s => s.Metric == "Total Invoices")?.Value ?? "0")</div></div>
         <div class="stat-card amber"><div class="label">Avg Sale</div><div class="value">Rs@(salesData.FirstOrDefault(s => s.Metric == "Average Sale Amount")?.Value?.Replace("Rs","") ?? "0")</div></div>
+    </div>
+    <div class="chart-panel">
+        <div class="card-header">Daily Sales / Purchase Trend</div>
+        <div class="chart-bar-wrap">
+            @foreach (var d in dailyData.Where(d => d.SalesAmount > 0 || d.PurchaseAmount > 0))
+            {
+                <div class="chart-bar">
+                    <div class="bar green" style="height:@GetChartHeight(d.SalesAmount)%" title="Sales: Rs@(d.SalesAmount.ToString("N0"))"></div>
+                    <div class="bar amber" style="height:@GetChartHeight(d.PurchaseAmount)%" title="Purchases: Rs@(d.PurchaseAmount.ToString("N0"))"></div>
+                    <div class="chart-bar-label">@d.Date.ToString("dd MMM")</div>
+                </div>
+            }
+        </div>
     </div>
     <div class="card">
         <div class="card-header">Daily Sales Trend</div>
@@ -54,6 +79,18 @@
 }
 else if (activeTab == "cashier")
 {
+    <div class="chart-panel">
+        <div class="card-header">Cashier Performance</div>
+        <div class="chart-bar-wrap">
+            @foreach (var c in cashierData.Take(6))
+            {
+                <div class="chart-bar">
+                    <div class="bar" style="height:@GetChartHeight(ParseAmount(c.TotalSales))%" title="@c.CashierName - @c.TotalSales"></div>
+                    <div class="chart-bar-label">@c.CashierName</div>
+                </div>
+            }
+        </div>
+    </div>
     <div class="card">
         <div class="card-header">Sales by Cashier</div>
         <table>
@@ -64,7 +101,7 @@ else if (activeTab == "cashier")
                     <tr>
                         <td class="fw-600">@c.CashierName</td>
                         <td>@c.InvoiceCount</td>
-                        <td class="fw-600">Rs@c.TotalSales.Replace("Rs","")</td>
+                        <td class="fw-600">Rs@(c.TotalSales.Replace("Rs",""))</td>
                     </tr>
                 }
             </tbody>
@@ -73,6 +110,18 @@ else if (activeTab == "cashier")
 }
 else if (activeTab == "product")
 {
+    <div class="chart-panel">
+        <div class="card-header">Top Product Revenue</div>
+        <div class="chart-bar-wrap">
+            @foreach (var p in productData.Take(6))
+            {
+                <div class="chart-bar">
+                    <div class="bar" style="height:@GetChartHeight(ParseAmount(p.TotalSales))%" title="@p.ProductName - @p.TotalSales"></div>
+                    <div class="chart-bar-label">@p.ProductName</div>
+                </div>
+            }
+        </div>
+    </div>
     <div class="card">
         <div class="card-header">Top Products by Revenue</div>
         <table>
@@ -84,7 +133,7 @@ else if (activeTab == "product")
                         <td class="fw-600">@p.ProductName</td>
                         <td>@p.Category</td>
                         <td>@p.Quantity</td>
-                        <td class="fw-600">Rs@p.TotalSales.Replace("Rs","")</td>
+                        <td class="fw-600">Rs@(p.TotalSales.Replace("Rs",""))</td>
                     </tr>
                 }
             </tbody>

@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using POSApp.Data.Models;
 
@@ -37,7 +38,20 @@ namespace POSApp.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite($"Data Source={_dbPath};Pooling=false");
+            var sqliteConnectionStringBuilder = new SqliteConnectionStringBuilder
+            {
+                DataSource = _dbPath,
+                Cache = SqliteCacheMode.Shared,
+                Pooling = true,
+                Mode = SqliteOpenMode.ReadWriteCreate,
+            };
+
+            var connection = new SqliteConnection(sqliteConnectionStringBuilder.ToString())
+            {
+                DefaultTimeout = 5
+            };
+
+            optionsBuilder.UseSqlite(connection);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

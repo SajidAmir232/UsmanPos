@@ -28,15 +28,20 @@ namespace POSApp.Data.Services
             invoice.IsSynced = false;
 
             db.Invoices.Add(invoice);
-            db.SaveChanges();
 
             foreach (var item in invoice.Items)
             {
                 item.InvoiceGuid = invoice.Guid;
                 db.InvoiceItems.Add(item);
 
-                // reduce stock immediately (offline-safe, works without internet)
-                _productService.AdjustStock(item.ProductGuid, -item.Quantity);
+                var product = db.Products.FirstOrDefault(p => p.Guid == item.ProductGuid);
+                if (product != null)
+                {
+                    product.Quantity -= (int)item.Quantity;
+                    product.IsSynced = false;
+                    product.UpdatedAtUtc = DateTime.UtcNow;
+                    db.Products.Update(product);
+                }
             }
 
             db.SaveChanges();

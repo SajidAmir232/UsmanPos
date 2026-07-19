@@ -13,7 +13,8 @@ public class AuthService
         using var db = new LocalDbContext();
 
         var user = db.Users.FirstOrDefault(u => 
-            u.Username.ToLower() == username.ToLower() && 
+            (u.Username.ToLower() == username.ToLower() || 
+             u.Email.ToLower() == username.ToLower()) && 
             !u.IsDeleted);
 
         if (user == null)
