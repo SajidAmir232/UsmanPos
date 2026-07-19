@@ -16,12 +16,12 @@ else
 {
     <div class="page">
         <div class="sidebar @(isSidebarCollapsed ? "collapsed" : "")">
-            <div class="brand">
+            <div class="brand" @onclick="ToggleSidebar" style="cursor:pointer;">
                 <div>
                     POS System
                     <small>Web Dashboard</small>
                 </div>
-                <button class="btn btn-ghost btn-sm collapse-btn" @onclick="ToggleSidebar">
+                <button type="button" class="btn btn-ghost btn-sm collapse-btn" @onclick:stopPropagation="true" @onclick="ToggleSidebar">
                     @if (isSidebarCollapsed)
                     {
                         <span>&#9654;</span>

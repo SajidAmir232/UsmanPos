@@ -11,6 +11,8 @@ a:hover { text-decoration: underline; }
 .sidebar .brand > div { display: inline-flex; flex-direction: column; }
 .sidebar .collapse-btn { border: 1px solid rgba(255,255,255,0.14); color: #c4b5fd; background: transparent; }
 .sidebar .collapse-btn:hover { background: rgba(255,255,255,0.08); }
+.sidebar .brand { padding: 20px 16px; display: flex; align-items: center; justify-content: space-between; }
+.sidebar .brand small { display: block; font-size: 11px; font-weight: 400; color: #c4b5fd; margin-top: 2px; }
 .sidebar nav { flex: 1; padding: 8px 0; }
 .sidebar nav a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: #c4b5fd; font-size: 13px; font-weight: 500; transition: all 0.15s; border-left: 3px solid transparent; }
 .sidebar nav a:hover { background: rgba(255,255,255,0.08); color: #fff; text-decoration: none; }
@@ -19,6 +21,7 @@ a:hover { text-decoration: underline; }
 .sidebar.collapsed { width: 70px; }
 .sidebar.collapsed .brand { justify-content: center; }
 .sidebar.collapsed .brand > div { display: none; }
+.sidebar.collapsed .brand .collapse-btn { margin-right: 0; }
 .sidebar.collapsed nav a { justify-content: center; padding: 12px; }
 .sidebar.collapsed nav a span { display: none; }
 .sidebar.collapsed nav { padding: 8px 0; }
