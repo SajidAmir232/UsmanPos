@@ -28,14 +28,18 @@
 
 <style>
     .chart-panel {margin-bottom:16px;}
-    .chart-bar-wrap {display:flex;align-items:flex-end;gap:10px;overflow-x:auto;padding:12px 0;}
-    .chart-bar {display:flex;flex-direction:column;align-items:center;min-width:80px;height:140px;justify-content:flex-end;}
-    .chart-bar .bar {width:100%;border-radius:6px 6px 0 0;background:#4f46e5;min-height:4px;}
-    .chart-bar .bar-label {margin-top:6px;font-size:11px;color:#475569;text-align:center;word-break:break-word;}
-    .chart-bar.small .bar {background:#60a5fa;}
+    .chart-bar-wrap {display:flex;align-items:flex-end;gap:14px;overflow-x:auto;padding:12px 0;min-height:200px;}
+    .chart-bar {display:flex;flex-direction:column;align-items:center;min-width:110px;height:180px;justify-content:flex-end;}
+    .chart-bar .bar-wrap {display:flex;align-items:flex-end;justify-content:center;gap:6px;width:100%;height:100%;}
+    .chart-bar .bar {width:32px;border-radius:6px 6px 0 0;min-height:6px;transition:height .3s ease;}
+    .chart-bar .bar-label {margin-top:8px;font-size:11px;color:#475569;text-align:center;word-break:break-word;line-height:1.1;}
     .chart-bar.green .bar {background:#10b981;}
     .chart-bar.amber .bar {background:#f59e0b;}
-    .chart-bar.red .bar {background:#ef4444;}
+    .chart-legend {display:flex;gap:16px;margin-bottom:10px;}
+    .chart-legend span {display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;}
+    .legend-dot {width:10px;height:10px;border-radius:999px;display:inline-block;}
+    .legend-dot-sales {background:#10b981;}
+    .legend-dot-purchases {background:#f59e0b;}
 </style>
 
 @if (activeTab == "sales")
@@ -47,12 +51,18 @@
     </div>
     <div class="chart-panel">
         <div class="card-header">Daily Sales / Purchase Trend</div>
+        <div class="chart-legend">
+            <span><span class="legend-dot legend-dot-sales"></span>Sales</span>
+            <span><span class="legend-dot legend-dot-purchases"></span>Purchases</span>
+        </div>
         <div class="chart-bar-wrap">
             @foreach (var d in dailyData.Where(d => d.SalesAmount > 0 || d.PurchaseAmount > 0))
             {
                 <div class="chart-bar">
-                    <div class="bar green" style="height:@GetChartHeight(d.SalesAmount)%" title="Sales: Rs@(d.SalesAmount.ToString("N0"))"></div>
-                    <div class="bar amber" style="height:@GetChartHeight(d.PurchaseAmount)%" title="Purchases: Rs@(d.PurchaseAmount.ToString("N0"))"></div>
+                    <div class="bar-wrap">
+                        <div class="bar green" style="height:@(GetChartHeight(d.SalesAmount))px" title="Sales: Rs@(d.SalesAmount.ToString("N0"))"></div>
+                        <div class="bar amber" style="height:@(GetChartHeight(d.PurchaseAmount))px" title="Purchases: Rs@(d.PurchaseAmount.ToString("N0"))"></div>
+                    </div>
                     <div class="chart-bar-label">@d.Date.ToString("dd MMM")</div>
                 </div>
             }
@@ -85,7 +95,7 @@ else if (activeTab == "cashier")
             @foreach (var c in cashierData.Take(6))
             {
                 <div class="chart-bar">
-                    <div class="bar" style="height:@GetChartHeight(ParseAmount(c.TotalSales))%" title="@c.CashierName - @c.TotalSales"></div>
+                    <div class="bar" style="height:@(GetChartHeight(ParseAmount(c.TotalSales)))px" title="@c.CashierName - @c.TotalSales"></div>
                     <div class="chart-bar-label">@c.CashierName</div>
                 </div>
             }
@@ -116,7 +126,7 @@ else if (activeTab == "product")
             @foreach (var p in productData.Take(6))
             {
                 <div class="chart-bar">
-                    <div class="bar" style="height:@GetChartHeight(ParseAmount(p.TotalSales))%" title="@p.ProductName - @p.TotalSales"></div>
+                    <div class="bar" style="height:@(GetChartHeight(ParseAmount(p.TotalSales)))px" title="@p.ProductName - @p.TotalSales"></div>
                     <div class="chart-bar-label">@p.ProductName</div>
                 </div>
             }
@@ -197,7 +207,7 @@ else if (activeTab == "purchase")
                     <tr>
                         <td class="fw-600">@p.SupplierName</td>
                         <td>@p.InvoiceCount</td>
-                        <td class="fw-600">Rs@ParseAmount(p.TotalPurchase).ToString("N0")</td>
+                        <td class="fw-600">@FormatCurrency(p.TotalPurchase)</td>
                     </tr>
                 }
             </tbody>
@@ -317,5 +327,11 @@ else if (activeTab == "returns")
             .Replace(",", string.Empty)
             .Trim();
         return decimal.TryParse(cleaned, out var value) ? value : 0;
+    }
+
+    private string FormatCurrency(string amount)
+    {
+        var value = ParseAmount(amount);
+        return value.ToString("N0");
     }
 }
