@@ -11,7 +11,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddDbContextFactory<LocalDbContext>();
-builder.Services.AddSingleton<WebAuthService>();
+builder.Services.AddScoped<WebAuthService>();
 builder.Services.AddScoped<ReportsService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<CustomerService>();
