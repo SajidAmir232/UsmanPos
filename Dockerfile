@@ -9,17 +9,8 @@ COPY POSApp.Data/ POSApp.Data/
 COPY POSApp.Web/ POSApp.Web/
 RUN dotnet publish POSApp.Web/POSApp.Web.csproj -c Release -o /app/publish --no-restore --no-self-contained
 
-# ===== DIAGNOSTIC: confirm blazor.web.js actually got published =====
-RUN echo "----- contents of /app/publish/wwwroot -----" && \
-    ls -la /app/publish/wwwroot 2>&1 && \
-    echo "----- contents of /app/publish/wwwroot/_framework -----" && \
-    ls -la /app/publish/wwwroot/_framework 2>&1 && \
-    echo "----- looking for blazor.web.js anywhere in publish -----" && \
-    find /app/publish -iname "blazor.web.js" 2>&1 && \
-    echo "----- staticwebassets manifest present? -----" && \
-    find /app/publish -iname "*staticwebassets*" 2>&1
-
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+ARG PORT=8080
 WORKDIR /app
 RUN mkdir -p /app/data
 COPY --from=build /app/publish .
