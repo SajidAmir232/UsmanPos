@@ -23,7 +23,8 @@ a:hover { text-decoration: underline; }
 .sidebar.collapsed .brand > div { display: none; }
 .sidebar.collapsed .brand .collapse-btn { margin-right: 0; }
 .sidebar.collapsed nav a { justify-content: center; padding: 12px; }
-.sidebar.collapsed nav a span { display: none; }
+.sidebar.collapsed nav a span:not(.icon) { display: none; }
+.sidebar.collapsed nav a .icon { display: inline-block; }
 .sidebar.collapsed nav { padding: 8px 0; }
 
 main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -116,7 +117,9 @@ select.form-control { appearance: auto; }
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar { width: 60px; }
-    .sidebar .brand small, .sidebar nav a span { display: none; }
+    .sidebar .brand small { display: none; }
+    .sidebar nav a span:not(.icon) { display: none; }
+    .sidebar nav a .icon { display: inline-block; }
     .sidebar nav a { justify-content: center; padding: 12px; }
     .stat-grid { grid-template-columns: 1fr 1fr; }
 }
