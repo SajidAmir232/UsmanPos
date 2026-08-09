@@ -46,6 +46,59 @@
             }
         };
 
+        window.portalShortcuts = {
+            init: function() {
+                if (window.portalShortcuts.initialized) return;
+                window.portalShortcuts.initialized = true;
+
+                window.addEventListener('keydown', function(event) {
+                    var ctrlOrMeta = event.ctrlKey || event.metaKey;
+                    if (!ctrlOrMeta) return;
+
+                    var key = event.key.toLowerCase();
+
+                    if (key === 'n') {
+                        event.preventDefault();
+                        var path = window.location.pathname.toLowerCase();
+
+                        if (path.includes('/products')) {
+                            var productButton = document.getElementById('newProductShortcutButton');
+                            if (productButton) productButton.click();
+                        }
+                        else if (path.includes('/pos')) {
+                            var newOrderButton = document.getElementById('newSaleShortcutButton');
+                            if (newOrderButton) newOrderButton.click();
+                            else {
+                                window.location.href = '/pos';
+                            }
+                        }
+                        else if (path.includes('/customers')) {
+                            var customerButton = document.getElementById('newCustomerShortcutButton');
+                            if (customerButton) customerButton.click();
+                        }
+                        else if (path.includes('/suppliers')) {
+                            var supplierButton = document.getElementById('newSupplierShortcutButton');
+                            if (supplierButton) supplierButton.click();
+                        }
+                    }
+
+                    if (key === 'g') {
+                        event.preventDefault();
+                        var guideButton = document.getElementById('keyboard-guide-button');
+                        if (guideButton) guideButton.click();
+                    }
+
+                    if (key === '/') {
+                        event.preventDefault();
+                        var searchBox = document.getElementById('posProductSearch');
+                        if (searchBox) searchBox.focus();
+                    }
+                });
+            }
+        };
+
+        window.portalShortcuts.init();
+
         window.addEventListener('online', function() {
             Blazor.invokeMethodAsync('SyncOnlineStatus', true).catch(function(){});
         });

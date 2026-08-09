@@ -99,13 +99,44 @@ else
                         @(OfflineSync.IsOnline ? "Online" : "Offline")
                     </span>
                     @(WebAuth.CurrentUser?.Username ?? "Admin") | @(WebAuth.CurrentUser?.Role ?? "Admin")
-                    <button class="btn btn-ghost btn-sm" style="margin-left:8px;font-size:11px;" @onclick="Logout">Logout</button>
+                    <button id="keyboard-guide-button" class="btn btn-ghost btn-sm" style="margin-left:8px;font-size:11px;" @onclick="ToggleShortcutGuide">⌘ Guide</button>
+                    <button class="btn btn-ghost btn-sm" style="font-size:11px;" @onclick="Logout">Logout</button>
                 </div>
             </div>
             <div class="content">
                 @Body
             </div>
         </main>
+    </div>
+}
+
+@if (showShortcutGuide)
+{
+    <div class="shortcut-guide-overlay">
+        <div class="shortcut-guide-panel">
+            <div class="shortcut-guide-header">
+                <span>Keyboard Guide</span>
+                <button class="btn btn-ghost btn-sm" @onclick="ToggleShortcutGuide">×</button>
+            </div>
+            <div class="shortcut-guide-content">
+                <div class="shortcut-row">
+                    <span class="shortcut-key">Ctrl + N</span>
+                    <span class="shortcut-label">Create relevant record on current page</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-key">Ctrl + G</span>
+                    <span class="shortcut-label">Open this keyboard guide</span>
+                </div>
+                <div class="shortcut-row">
+                    <span class="shortcut-key">Ctrl + /</span>
+                    <span class="shortcut-label">Focus the product search on POS page</span>
+                </div>
+                <div class="shortcut-notes">
+                    <span><b>Products:</b> Ctrl + N opens the Add Product form.</span>
+                    <span><b>POS:</b> Ctrl + N starts a fresh order.</span>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
@@ -135,10 +166,16 @@ else
     }
 
     private bool isSidebarCollapsed;
+    private bool showShortcutGuide;
 
     private void ToggleSidebar()
     {
         isSidebarCollapsed = !isSidebarCollapsed;
+    }
+
+    private void ToggleShortcutGuide()
+    {
+        showShortcutGuide = !showShortcutGuide;
     }
 
     private void Logout()
