@@ -41,3 +41,6 @@ docker compose up --build
 ```
 
 The compose file maps the web app to port `5000`.
+
+Run command
+cd /workspaces/UsmanPos/POSApp.Web && dotnet run

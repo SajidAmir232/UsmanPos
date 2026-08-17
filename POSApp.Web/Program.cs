@@ -4,8 +4,22 @@ using POSApp.Data;
 using POSApp.Data.Services;
 using POSApp.Web;
 using POSApp.Web.Components;
+using POSApp.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var supabaseSection = builder.Configuration.GetSection("Supabase");
+var supabaseEnabled = supabaseSection.GetValue<bool>("Enabled", false);
+if (supabaseEnabled)
+{
+    var supabaseConnectionString = supabaseSection.GetValue<string>("ConnectionString");
+    if (!string.IsNullOrWhiteSpace(supabaseConnectionString))
+    {
+        Environment.SetEnvironmentVariable("SUPABASE_CONNECTION_STRING", supabaseConnectionString);
+    }
+
+    Environment.SetEnvironmentVariable("USE_SUPABASE", "true");
+}
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -27,15 +41,38 @@ builder.Services.AddScoped<ImeiService>();
 builder.Services.AddScoped<RepairJobService>();
 builder.Services.AddScoped<CustomerLedgerService>();
 builder.Services.AddScoped<OfflineSyncService>();
+builder.Services.AddSingleton<KeyboardShortcutService>();
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
-    db.Database.Migrate();
+    var runtimeDb = new LocalDbContext();
+    var useSupabase = string.Equals(Environment.GetEnvironmentVariable("USE_SUPABASE"), "true", StringComparison.OrdinalIgnoreCase)
+        && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SUPABASE_CONNECTION_STRING"));
 
-    var existingDefaultAdmin = db.Users.FirstOrDefault(u =>
+    if (useSupabase)
+    {
+        try
+        {
+            runtimeDb.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Supabase/Postgres migration failed. Falling back to local SQLite database.");
+            Environment.SetEnvironmentVariable("USE_SUPABASE", "false");
+            runtimeDb.Dispose();
+
+            runtimeDb = new LocalDbContext();
+            runtimeDb.Database.Migrate();
+        }
+    }
+    else
+    {
+        runtimeDb.Database.Migrate();
+    }
+
+    var existingDefaultAdmin = runtimeDb.Users.FirstOrDefault(u =>
         u.Guid == Guid.Parse("00000000-0000-0000-0000-000000000001") ||
         (u.Username == "admin" && u.Email == "admin@posapp.local"));
 
@@ -46,11 +83,12 @@ using (var scope = app.Services.CreateScope())
         existingDefaultAdmin.PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin34");
         existingDefaultAdmin.UpdatedAtUtc = DateTime.UtcNow;
         existingDefaultAdmin.IsSynced = false;
-        db.Users.Update(existingDefaultAdmin);
-        db.SaveChanges();
+        runtimeDb.Users.Update(existingDefaultAdmin);
+        runtimeDb.SaveChanges();
     }
 
-    MockDataService.SeedAll(db);
+    MockDataService.SeedAll(runtimeDb);
+    runtimeDb.Dispose();
 }
 
 if (!app.Environment.IsDevelopment())

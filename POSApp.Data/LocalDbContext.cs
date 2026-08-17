@@ -59,6 +59,19 @@ namespace POSApp.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            var useSupabase = string.Equals(Environment.GetEnvironmentVariable("USE_SUPABASE"), "true", StringComparison.OrdinalIgnoreCase)
+                || !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SUPABASE_CONNECTION_STRING"));
+
+            if (useSupabase)
+            {
+                var connectionString = Environment.GetEnvironmentVariable("SUPABASE_CONNECTION_STRING");
+                if (!string.IsNullOrWhiteSpace(connectionString))
+                {
+                    optionsBuilder.UseNpgsql(connectionString);
+                    return;
+                }
+            }
+
             var sqliteConnectionStringBuilder = new SqliteConnectionStringBuilder
             {
                 DataSource = _dbPath,

@@ -23,7 +23,7 @@ bld/
 .vs/
 *.dbmdl
 *.jfm
-
+*.env
 ## Rider
 .idea/
 *.sln.iml
